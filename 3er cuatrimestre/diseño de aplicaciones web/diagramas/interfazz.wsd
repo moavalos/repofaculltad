@@ -1,0 +1,40 @@
+@startuml
+!define RECTANGLE class
+
+RECTANGLE Vendedor {
+  + autenticarEnSistema()
+  + accederAdministracionOrdenes()
+  + buscarOrdenesPorCliente()
+  + buscarOrdenesPorPrioridad()
+  + seleccionarOrdenDeCompra()
+  + seleccionarDistribuidorYTransporte()
+  + confirmarOrden()
+}
+
+RECTANGLE Sistema {
+  + mostrarListaOrdenesCompra()
+  + mostrarDetallesOrden()
+  + mostrarProductosComprados()
+  + mostrarDistribuidoresZonales()
+  + generarNumeroGuiaEntrega()
+  + actualizarEstadoOrden()
+  + registrarOrdenCompletada()
+}
+
+Vendedor -> Sistema : autenticarEnSistema()
+Vendedor -> Sistema : accederAdministracionOrdenes()
+Sistema -> Vendedor : mostrarListaOrdenesCompra()
+Vendedor -> Sistema : buscarOrdenesPorCliente()
+Vendedor -> Sistema : buscarOrdenesPorPrioridad()
+Sistema -> Vendedor : mostrarListaOrdenesCompra()
+Vendedor -> Sistema : seleccionarOrdenDeCompra()
+Sistema -> Vendedor : mostrarDetallesOrden()
+Sistema -> Vendedor : mostrarProductosComprados()
+Sistema -> Vendedor : mostrarDistribuidoresZonales()
+Vendedor -> Sistema : seleccionarDistribuidorYTransporte()
+Sistema -> Vendedor : confirmarOrden()
+Sistema -> Vendedor : generarNumeroGuiaEntrega()
+Sistema -> Vendedor : actualizarEstadoOrden()
+Sistema -> Vendedor : registrarOrdenCompletada()
+
+@enduml
