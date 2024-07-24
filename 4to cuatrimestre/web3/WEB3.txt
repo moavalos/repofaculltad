@@ -1,0 +1,201 @@
+ORM->Mapeo objeto-relacional. Técnica de programación para convertir datos
+entre el sistema de tipos utilizado en un lenguaje de programación 
+orientado a objetos y el utilizado en una base de datos relacional, 
+utilizando un motor de persistencia. Ayuda al desajuste de impedancia:
+diferencias existentes entre los modelos relacionales (base de datos) y los
+modelos conceptuales.
+
+¿Por qué no debiera usar ORM?: Maduración del mismo, eficiencia en resolución de consultas,capacitacion,tiempo.
+NO quiere decir que NO debe usarse, sino en los puntos o funcionalidades en los que pudiera afectar a mi performance es 
+conveniente usar nativo o pegarle a un Store Procedure.
+
+ADO.NET EF-> Es un ORM que separa el acceso a datos de la manipulación de datos;
+pudiendo recuperar, controlar y actualizar los mismos.
+Proveedores: SQLClient,OleDb,Odbc,OracleClient.
+Objetivo: Reducir la cantidad de código (menos errores) y el mantenimiento necesarios para
+las aplicaciones orientadas a datos.
+
+
+EDM: Modelo de entidades. Es la definición del mapeo que creamos entre la base de datos y nuestro
+modelo conceptual o de entidades.
+
+En EF 6, Un modelo se guarda en un fichero con extensión edmx. Más maduro, soporta M-M
+EF Core-> escrito desde cero.
+
+Lenguajes de consulta:
+LINQ To Entities->Devuelve las entidades definidas en el modelo conceptual
+Entity SQL->Las consultas deben estar contenidas dentro de una variable string
+
+Entity Client Data Provider->Convierte las consultas y sentencias LTE o ESQL
+en consultas o sentencias SQL de base de datos, comunicandose con ADO.Net quien
+dialoga con la bd.
+Object Service->Realiza la materializacion: convierte los datos resultantes de
+la base de datos devueltos por “ECDP” en una estructura objeto entidad
+
+Enfoques:
+-Data Base First->Parte de un modelo relacional (BD) para generar el EDM.
+Trabaja con DbContext. EF6 Admite EDMX (modelo visual) pero Core no.
+-Model First->Parte de un modelo conceptual (EDMX) para generar el modelo relacional.
+Trabaja con DbContext.
+-Code First->Parte de un modelo de entidades en POO para generar el modelo relacional
+Trabaja con DbContext.Exige mas conocimientos de POO.
+
+DbContext->clase que se crea automáticamente en el enfoque database first (en code first la creo manual)
+	Adminisra la relación entre la BD y el contexto. Contexto hereda de DbContext.
+
+Ciclo de vida:
+En EF cada entidad tiene un estado que cambia dependiendo de lo que realice
+el contexto. Este estado es tipo Enum(System.Data.EntityState) que permite valores:
+-Added->Agregada al contexto(add,previo al insert)
+-Deleted->Eliminada del contexto(previo al delete)
+-Modified->Indica la modificación de una propiedad de una entidad recuperada del contexto(previo al update)
+-Unchanged->Entidad recuperada del contexto pero no modificada(Ej: despues de un saveChanges)
+-Detached->Entidad no pertenece al contexto (ej: al hacer un new de una entidad antes de un Add)
+
+Change Tracking->Todos los estados que mantiene las modificaciones vinculadas a las propiedades
+de cada entidad.
+
+EF ejecuta INSERT, DELETE o UPDATE segun el estado cuando se hace SaveChanges()
+
+Soporta Herencia usando su patrón de herencia predeterminado(TPH)
+
+Nugget necesarios-> Mic.EFCore.SQLServer,Mic.EFCore.Tools,Mic.EFCore.Design
+Ejecutar comando Scaffold-DbContext
+
+Inyeccion de dependencia del contexto en EF StartUp o Program.
+
+*CREACION DE ELEMENTO*
+EFPW3 ctx = new EFPW3();
+Cliente cli = new Cliente();
+cli.Nombre = "Chevrolet S.A";
+ctx.Clientes.Add(cli);
+ctx.SaveChanges();
+
+*MODIFICACION DE ELEMENTO*
+EFPW3 ctx = new EFPW3();
+Empleado emp = (from em in ctx.Empleados
+ select em).First();
+emp.Nombre = "Modificado";
+ctx.SaveChanges();
+
+*ELIMINACIÓN DE ELEMENTO*
+EFPW3 ctx = new EFPW3();
+var cliente = context.Clientes.First();
+ctx.Clientes.Remove(cliente);
+ctx.SaveChanges();
+
+RELACIONES
+
+-1 a 1->Cada entidad es una propiedad de la otra entidad (Ej Direccion de persona
+y persona de direccion)
+-1 a muchos->Una entidad tiene una lista de la otra y la otra parte una propiedad.
+	(Ej Persona tiene una lista de trabajos y trabajo tiene una prop persona)
+-Muchos a Muchos->en la bd hay una tabla intermedia pero en el modelo conceptual
+	cada entidad tiene una lista de la otra.(Ej estudiantes con lista de cursos
+y cursos con lista de estudiantes)
+
+VALIDACIONES EN EF:
+Se crea una clase parcial con el mismo nobre que la entidad EF, agregandole
+	encima el atributo ModelMetaDataType que referirá a otra clase que
+	se debe crear EntidadModelMetaData con las Dataannotations
+
+LINQ->Elimnia la distancia en cuanto a lenguaje de el mundo de los objetos
+	y el mundo de los datos, permitiendo escribir las consultas en c# y se compila. (Va mas allá de EF)
+	PARTES DE UNA CONSULTA EN LINQ
+	1)Origen de datos --> Indica de donde tomará los datos (LINQ To SQL->Bases de datos SQL Server, 
+		LINQ To Objects->Cadenas, numeros, objetos, etc.,LINQ To XML->Documentos XML,
+		LINQ To Datasets->Conjunto de datos de ADO.NET,LINQ To Entities(**))
+	2)Preparación o creación de la consulta-->Sentencia (no ejecutada) que devuelve un IQeriable/IEnumerable
+	3)Ejecución de la consulta->Obtencion de datos (foreach, ToList,FirstOrDefault,etc)
+
+(**) Se usa para escribir consultas hacia el EDM y devuelve las entidades definidas.
+	PARA EL PASO 2:
+	-Sintaxis de expresiones de consulta: from p in context.Entidad where p.atributo==xxx select p;
+	-Sintaxis de consultas basadas en métodos(expresiones Lambda): context.Entidad.Where(p => p.Atributo==xxx).ToList())
+	PARA EL PASO 3:
+	ToList,ToArray,FirstOrDefault,First,Single,SingleOrDefault,foreach..
+
+LAZY LOADING(POR DEFECTO)-->Patron de diseño que 'posterga' la inicialización de un objeto hasta el momento en el cual
+	es necesitado. Mas eficiente ya que no sobrecarga memoria de antemano.
+	Para EF5 es necesario instalar el nugget Proxies y activarlo en Startup.cs.
+	EF 6->Por default activado, FWCore->Por default NO activado.
+
+EAGER LOADING-->Los objetos se inicializan la primera vez al momento de ejecutar la consulta.
+	Para usarlo se debe implementar el método Include() en la consulta pasando como parámetro
+	las entidades a recuperar.
+
+
+SOLID--> Aumenta la cohesion y baja el acoplamiento.
+
+S-> Responsabilidad única->Preferible tener muchas clases pequeñas a una enorme.Cada clase debe tener una única razon para cambiar (puede tener responsabilidades mas pequeñas pero una sola fuerte)
+O-> Open/Close ->Open a extensión y Close a modificación. Los cambios debieran generar nuevo código y no modificación del existente.
+	Ej. Viola el principio si tiene muchos if o case preguntando por un tipo por todos lados.
+L-> Sustitución de Liskov->Los subtipos deben poder sustituirse con su tipo base (Polimosfismo)
+I-> Segregación de Interfaces-> Evitar interfaces grandes(las entidades no deben depender de métodos que no usan).
+	Ej. Viola el principio si implemento una interfaz en una clase que usa sólo un método de la misma.
+D-> Inversión de Dependencia-> Los módulos de alto nivel no deben depender de los de bajo nivel. Ambos de abstracciones deben depender. Los detalles deben depender de las abstracciones y no viceversa.
+DRY,KISS,YAGNI
+
+WEB SERVICES
+Tecnología Web para el intercambio de información entre sistemas y/o plataformas usando protocolos y estándares,
+permitiendo la interoperabilidad entre los mismos mas allá de los lenguajes utilizados en cada uno.
+
+HISTORIA->DCOM,CORBA,RMI,RPC,SOAP,REST.
+
+REST
+Estilo de arquitectura que utiliza métodos HTTP explícitamente (GET,POST,PUT,DELETE). StateLess.
+Se identifica cada recurso a través de su URL.
+No define de que forma se representa la información, eso lo indica el dev (JSON y XML los mas utilizados)
+	VENTAJAS: Liviano, escalable,basado en HTTP,Aceptado por la comunidad.
+
+JSON
+Formato liviano de intercambio de datos constituido por Object{},array[] y Value :.
+
+XML
+Lenguaje de marcado (como HTML) donde usa etiquetas para todo (objetos, array, atributos)
+
+ASPNET CORE Web Api-->Marco que facilita la creación de servicios HTTP.
+	Basado en convenciones (ej-> los métodos del controller empiezan con el nombre del método HTTP vinculado)
+	Por default serializa en JSON
+	no instancia clases particulares como retorno de los métodos.
+	BINDING
+		Primitivos-->Get(int id) o Post([FromBody] string value)
+		Complejos-->Get([FromQuery]Persona value) o Post(Persona value)
+		POR DEFECTO EL SEGUNDO
+	FromQuery-->bindeo el parámetro desde la URL
+	FromBody-->bindeo el parámetro desde el body del request
+
+SOAP
+Protocolo que permite la comunicación entre aplicaciones a través de mensajes por medio de internet.
+Basado en XML, independiente de la plataforma y el lenguaje.
+
+Mensajes SOAP->Documento XML que contiene: elemento de sobres, encabezado,cuerpo, error e info de estado.
+
+ESTÁNDARES
+XML-> Especificación desarrollada por WC3. Describe documentos con estructura estándar.
+	Permite crear sus propios tags
+
+WDSL-> Lenguaje basado en XML que indica las interfaces que provee el Servicio Web y los
+tipos de datos necesarios para la utilización del mismo. Actualmente en versión 2.0
+Tipos de Datos
+<types>: Esta sección define los tipos de datos usados en los mensajes. Se utilizan los
+tipos definidos en la especificación de esquemas XML.
+Mensajes
+<message>: Define los elementos de mensaje. Cada mensaje puede consistir en una
+serie de partes lógicas. Las partes pueden ser de cualquiera de los tipos definidos en la
+sección anterior.
+Tipos de Puerto
+<portType>: Define las operaciones permitidas y los mensajes intercambiados en el
+Servicio.
+Bindings
+<binding>: Especificamos los protocolos de comunicación usados.
+Servicios
+<service>: Conjunto de puertos y dirección de los mismos. Esta parte final hace referencia
+a lo aportado por las secciones anteriores. Con estos elementos no sabemos que hace un
+servicio pero si disponemos de la información necesaria para interactuar con él funciones,
+mensajes de entrada/salida, protocolos...).
+
+
+DISCO
+Permite encontrar un servidor web en particular. Especifica los servicios descubiertos en una URL.
+	

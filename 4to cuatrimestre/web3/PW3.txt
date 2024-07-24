@@ -1,0 +1,69 @@
+1)CREAR BD CON TABLAS
+2)CREAR PROYECTO MVC .WEB(AGREGAR CARPETA 
+				CONTROLLERS SI FALTA)
+3)CREAR CONTROLADOR DE ENTIDAD PRINCIPAL
+4)AGREGAR PROYECTOS (BIBLIOTECA DE CLASES).DATA
+	Y .LOGICA A LA SOLUCIÓN
+5)IMPORTAR PAQUETES DE EF DESDE .DATA>ADMINISTRAR
+	PAQUETES DE NUGET:
+		Microsoft.EntityFrameworkCore
+		Microsoft.EntityFrameworkCore.Tools
+		Microsoft.EntityFrameworkCore.Design (EN DATA Y WEB)
+		EntityFramework
+		Microsoft.EntityFrameworkCore.SqlServer (EN DATA Y WEB)
+		Microsoft.AspNetCore.Mvc (en solucion, menos en web)
+6)Desde .Web>Dependencias agregar la referencia a .Data y .Logica
+7)Abrir la Package Manager Console,posicionarse en Proyecto Data
+	 y ejecutar el comando para crear las clases (en una linea):
+		Scaffold-DbContext "Server=.;Database=PruebaArtistas;Trusted_Connection=True;"Microsoft.EntityFrameworkCore.SqlServer -OutputDir Entidades
+8)Verificar que Logica tenga referencia a Data
+9)Agregamos el Servicio en .Logica que va a contener una 
+	interface y abajo una Clase que implementará la Interface.
+	La interface contiene la firma de los métodos.
+	La clase implementa los métodos usando el context 
+		(Ej: _context.Entidades.ToList())
+10)Inyectamos el contexto desde el constructor de la clase: recibe el
+	contexto (tipo -->NombreDelContexto) y tiene una prop privada 
+	de ese tipo a la que se asigna.
+11)En el constructor del controlador le pasamos el servicio y lo asignamos a una propiedad privada
+	para usarlos llamamos a los metodos del servicio y a donde va la vista.
+12)En program agregamos el scope del servicio --> builder.Services.AddScoped<IArtistaService, ArtistaService>();
+	y el scope del contexto
+13)En el Layout(o en la vista que corresponda) agregamos los link a los metodos del controller
+14)Desarrollar logica de negocio
+
+PARA DATA ANNOTATIONS
+
+1)Crear carpeta MetaDataTypes dentro de Entidades (.Data)
+2)Verificar que tenga el mismo namespace que mi clase original
+3)Dentro crear una partial class con el mismo nombre que mi entidad
+	y un constructor vacio
+3)debajo crear una clase NombreModelMetaData
+ [ModelMetadataType(typeof(EspecieModelMetaData))]
+    public partial class Especie
+    {
+        public Especie()
+        {
+
+        }
+    }
+
+    public class EspecieModelMetaData
+    {
+
+        [Required]
+        public string Nombre { get; set; } = null!;
+    }
+
+
+4)Sintaxis para los campos del form: Nombre : <input type="text" name="Nombre" asp-for="Nombre" />
+        					<span asp-validation-for="Nombre"></span>
+5)Sintaxis para validacion en controller:  if (!ModelState.IsValid)
+            						{
+                						return View(entidad);
+            						}
+
+-_________________________
+Para conectar con bd azure 
+Scaffold-DbContext "Server=tcp:storageserverblob.database.windows.net;Database=BlobStorage;Trusted_Connection=False;Encrypt=True;User ID=BlobStorageUser;Password=Azure123.;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir EF
+
