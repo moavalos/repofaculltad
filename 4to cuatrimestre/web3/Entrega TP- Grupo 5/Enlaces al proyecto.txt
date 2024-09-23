@@ -1,2 +1,0 @@
-Código del proyecto: https://github.com/godiee/ExpoWeb3
-Deploy: https://investigacionweb3.azurewebsites.net/
